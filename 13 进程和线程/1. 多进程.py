@@ -1,25 +1,23 @@
-import os
-import random
 import time
 from multiprocessing import Pool
 
 
-def long_time_task(name):
-    print(f'运行任务{name}({os.getpid()})')
-    start = time.time()
-    time.sleep(random.random() * 3)
-    end = time.time()
-    print(f'任务{name}运行了{end - start}秒')
+def Foo(i):
+    time.sleep(2)
+    return i + 100
 
 
-if __name__ == '__main__':
-    print(f'父进程{os.getpid()}.')
-    p = Pool(4)
-    for i in range(5):
-        p.apply_async(long_time_task, args=(i,))
-    print('等待所有子进程结束...')
-    p.close()
-    p.join()
-    print('所有子进程已经结束')
+def Bar(arg):
+    print('-->exec done:', arg)
 
 
+pool = Pool(5)  # 允许进程池同时放入5个进程
+
+for i in range(10):
+    pool.apply_async(func=Foo, args=(i,), callback=Bar)
+    # func子进程执行完后，才会执行callback，否则callback不执行（而且callback是由父进程来执行了）
+    # pool.apply(func=Foo, args=(i,))
+
+print('end')
+pool.close()
+pool.join()  # 主进程等待所有子进程执行完毕。必须在close()或terminate()之后。
